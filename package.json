@@ -1,0 +1,31 @@
+{
+  "name": "chansight",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "ChanSight (チャンサイト) - Multi-tenant YouTube Analytics Remote MCP Server on Cloudflare Workers",
+  "scripts": {
+    "dev": "wrangler dev --host localhost:8787 --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "hono": "^4.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,27 @@
+// Self-hosting template: copy or adapt into wrangler.jsonc for your own deployment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chansight",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "PUBLIC_BASE_URL": "https://your-domain.example.com"
+  },
+  "routes": [
+    {
+      "pattern": "your-domain.example.com",
+      "custom_domain": true
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "YOUR_PRODUCTION_KV_NAMESPACE_ID",
+      "preview_id": "YOUR_PREVIEW_KV_NAMESPACE_ID"
+    }
+  ]
+}

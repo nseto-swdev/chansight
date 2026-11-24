@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "chansight",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-01-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"PUBLIC_BASE_URL": "https://chansight.nseto.com"
+	},
+	"routes": [
+		{
+			"pattern": "chansight.nseto.com",
+			"custom_domain": true
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "6acd1e7567904b528c7e3c74302d8833",
+			"preview_id": "9029103bc69f4e89ae90cd8b72c2f656"
+		}
+	]
+}

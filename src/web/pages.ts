@@ -364,23 +364,23 @@ export function renderHomePage(publicBaseUrl: string): string {
   const mcpUrl = `${normalizedBase}${MCP_ROUTE}`;
 
   return renderLayout({
-    title: `${SERVICE_DISPLAY_NAME} | YouTubeアナリティクスをChatGPTやMuseで分析`,
+    title: `${SERVICE_DISPLAY_NAME} | YouTubeの数字を見ながら、AIと作戦会議`,
     description:
-      "YouTuber・VTuber向け。ChatGPTやMuseにURLを登録してGoogleログインするだけで、YouTubeアナリティクスを自然な日本語で分析できる無料MCPサーバー。",
+      "YouTuber・VTuber向けの無料YouTubeアナリティクス連携ツール。ChatGPT・Claude・Gemini・MuseなどのAIにURLを登録してGoogleログインするだけで、チャンネルの数字を見ながら振り返りや作戦会議ができます。",
     body: `
     <section class="card hero">
       <span class="pill">YouTuber・VTuber向け / 無料</span>
-      <h1>YouTubeアナリティクスを、<br />いつものAIチャットにそのまま相談。</h1>
+      <h1>チャンネルの数字を見ながら、<br />AIと作戦会議</h1>
       <p class="lead">
-        ${escapeHtml(SERVICE_DISPLAY_NAME)}は、あなたのYouTubeチャンネルの数字をChatGPTやMuseから直接読み取れるようにする連携ツールです。
-        難しい設定やCSVダウンロードは不要。普段どおり日本語で話しかけるだけで分析できます。
+        ${escapeHtml(SERVICE_DISPLAY_NAME)}は、あなたのYouTubeアナリティクスをAIチャットにつなぐ無料ツールです。
+        スクショやCSVを用意しなくても、ChatGPT・Claude・Gemini・MuseなどのAIと一緒に配信や動画の振り返りができます。
       </p>
 
       <div class="endpoint-box">
         <span class="endpoint-url" id="mcp-url">${escapeHtml(mcpUrl)}</span>
         <button type="button" class="btn btn-copy" id="copy-btn" onclick="copyMcpUrl()">URLをコピー</button>
       </div>
-      <p class="copy-note" id="copy-status">ChatGPTやMuseの「MCPサーバー（コネクタ / アプリ）」設定にこのURLを貼り付けて使います。</p>
+      <p class="copy-note" id="copy-status">お使いのAIの「MCPサーバー（コネクタ / アプリ）」設定にこのURLを貼り付けて使います。</p>
     </section>
 
     <section class="card">
@@ -393,14 +393,21 @@ export function renderHomePage(publicBaseUrl: string): string {
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <div class="step-title">ChatGPT / Muse に登録</div>
-          <p>お使いのAIツールの設定（コネクタ / アプリ / カスタムMCP追加）を開き、コピーしたURLを貼り付けます。</p>
+          <div class="step-title">お使いのAIに登録</div>
+          <p>ChatGPT・Claude・Gemini・Museなどの設定（コネクタ / アプリ / カスタムMCP追加）を開き、コピーしたURLを貼り付けます。</p>
         </div>
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-title">Googleでログインして許可</div>
-          <p>自動で開くGoogle画面で自分のチャンネルを選び、閲覧権限を許可すれば準備完了！すぐに質問できます。</p>
+          <p>自動で開くGoogle画面で自分のチャンネルを選び、閲覧権限を許可すれば準備完了。すぐに話しかけられます。</p>
         </div>
+      </div>
+      <div class="callout" style="margin-top: 18px; margin-bottom: 0; font-size: 0.88rem; color: var(--muted);">
+        <strong style="color: var(--text);">対応AI・ご利用時の注意</strong>
+        <ul style="margin: 6px 0 0; padding-left: 18px;">
+          <li>動作確認済み：ChatGPT / Claude / Gemini / Muse（その他、MCP対応のAIクライアント）</li>
+          <li>契約プランによってはMCPが利用可否の場合があります、各AIの仕様・プラン条件をご確認ください。</li>
+        </ul>
       </div>
     </section>
 
@@ -440,7 +447,7 @@ export function renderHomePage(publicBaseUrl: string): string {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(url).then(function() {
             btn.textContent = 'コピーしました！';
-            status.textContent = 'コピー完了！ChatGPTやMuseの設定画面に貼り付けてください。';
+            status.textContent = 'コピー完了！お使いのAIの設定画面に貼り付けてください。';
             setTimeout(function() { btn.textContent = 'URLをコピー'; }, 2500);
           });
         }
@@ -472,7 +479,7 @@ export function renderPrivacyPolicyPage(): string {
       <p>本サービスは動画の作成・編集・削除、チャンネル設定の変更などの書き込み権限は一切取得しません。</p>
 
       <h3>2. 情報の利用目的</h3>
-      <p>取得した情報は、利用者が接続したMCP対応AIクライアント（ChatGPT、Muse等）からのリクエストに応答し、利用者自身のYouTubeチャンネル分析結果を表示するためのみに使用します。</p>
+      <p>取得した情報は、利用者が接続したMCP対応AIクライアント（ChatGPT、Claude、Gemini、Muse等）からのリクエストに応答し、利用者自身のYouTubeチャンネル分析結果を表示するためのみに使用します。</p>
 
       <h3>3. Google API Services User Data Policy（Limited Use要件）への準拠</h3>
       <div class="callout">
@@ -546,7 +553,7 @@ export function renderTermsPage(): string {
       <h3>3. 利用者の責任</h3>
       <ul>
         <li>利用者は、自身が正当な管理権限を有するYouTubeチャンネルのみを本サービスに連携するものとします。</li>
-        <li>本サービスを接続するAIクライアント（ChatGPT、Muse等）側でのデータ取り扱いについては、各AIサービスの利用規約・プライバシー設定を利用者自身の責任で確認してください。</li>
+        <li>本サービスを接続するAIクライアント（ChatGPT、Claude、Gemini、Muse等）側でのデータ取り扱いについては、各AIサービスの利用規約・プライバシー設定を利用者自身の責任で確認してください。</li>
       </ul>
 
       <h3>4. 禁止事項</h3>

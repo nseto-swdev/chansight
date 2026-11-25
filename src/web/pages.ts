@@ -451,7 +451,7 @@ export function renderHomePage(publicBaseUrl: string): string {
         <strong style="color: var(--text);">対応AI・ご利用時の注意</strong>
         <ul style="margin: 6px 0 0; padding-left: 18px;">
           <li>動作確認済み：ChatGPT / Claude / Gemini / Muse（その他、MCP対応のAIクライアント）</li>
-          <li>契約プランによってはMCPが利用可否の場合があります、各AIの仕様・プラン条件をご確認ください。</li>
+          <li>契約プランによってはMCPが利用可否の場合があります。各AIの仕様・プラン条件をご確認ください。</li>
         </ul>
       </div>
     </section>

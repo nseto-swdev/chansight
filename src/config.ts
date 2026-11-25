@@ -3,6 +3,7 @@ export const SERVICE_NAME_JA = "チャンサイト";
 export const SERVICE_DISPLAY_NAME = `${SERVICE_NAME}（${SERVICE_NAME_JA}）`;
 export const DEFAULT_PUBLIC_BASE_URL = "https://chansight.nseto.com";
 export const CONTACT_EMAIL = "support-chansight@nseto.com";
+export const REPOSITORY_URL = "https://github.com/nseto-swdev/chansight";
 
 export const MCP_ROUTE = "/mcp";
 

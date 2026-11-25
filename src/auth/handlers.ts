@@ -23,6 +23,7 @@ import {
   renderAuthorizeConsentPage,
   renderHomePage,
   renderOAuthErrorPage,
+  renderOpenSourcePage,
   renderPartialGrantErrorPage,
   renderPrivacyPolicyPage,
   renderTermsPage,
@@ -93,6 +94,11 @@ export function createDefaultApp() {
   app.get("/terms", (c) => {
     const baseUrl = getBaseUrl(c.env, c.req.url);
     return htmlResponse(renderTermsPage(baseUrl));
+  });
+
+  app.get("/open-source", (c) => {
+    const baseUrl = getBaseUrl(c.env, c.req.url);
+    return htmlResponse(renderOpenSourcePage(baseUrl));
   });
 
   app.get("/health", (c) => {

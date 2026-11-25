@@ -8,6 +8,14 @@
     "node": ">=20"
   },
   "description": "ChanSight (チャンサイト) - Multi-tenant YouTube Analytics Remote MCP Server on Cloudflare Workers",
+  "homepage": "https://chansight.nseto.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nseto-swdev/chansight.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nseto-swdev/chansight/issues"
+  },
   "scripts": {
     "build:version": "node scripts/write-build-info.mjs",
     "predev": "node scripts/write-build-info.mjs",

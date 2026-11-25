@@ -3,6 +3,7 @@ import {
   DEFAULT_PUBLIC_BASE_URL,
   GOOGLE_SCOPE_LABELS_JA,
   MCP_ROUTE,
+  REPOSITORY_URL,
   SERVICE_NAME,
   SERVICE_NAME_JA,
 } from "../config.js";
@@ -389,6 +390,7 @@ function renderLayout(options: {
         <a href="/">ホーム</a>
         <a href="/privacy">プライバシーポリシー</a>
         <a href="/terms">利用規約</a>
+        <a href="/open-source">オープンソース</a>
       </div>
       <p style="margin-top: 8px; margin-bottom: 4px;">&copy; ${new Date().getUTCFullYear()} ${escapeHtml(SERVICE_NAME)}</p>
       <p style="margin: 0; font-size: 0.78rem; opacity: 0.78; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${escapeHtml(BUILD_VERSION)}</p>
@@ -471,7 +473,7 @@ export function renderHomePage(publicBaseUrl: string): string {
       <div class="trust-grid">
         <div class="trust-item">
           <strong>完全な「読み取り専用」</strong>
-          <p>動画の削除・非公開化・タイトル変更・コメント投稿などの操作権限は一切リクエストしません。</p>
+          <p>動画の削除・非公開化・タイトル変更・コメント投稿などの操作権限は一切リクエストしません。<a href="/open-source">ソースコードも公開しています</a>。</p>
         </div>
         <div class="trust-item">
           <strong>AI学習には一切使いません</strong>
@@ -555,6 +557,7 @@ export function renderPrivacyPolicyPage(
         <li>YouTube Analyticsから取得したレポートデータや動画情報は、レスポンス生成のために一時的にメモリ上で処理されるのみであり、本サービスのデータベース等には永続保存しません。</li>
         <li>APIアクセスの継続に必要なGoogle OAuthのリフレッシュトークンおよびアクセストークンは、AES-256-GCM方式で暗号化したうえでCloudflare KVに安全に保存されます。</li>
         <li>通信はすべてHTTPS（TLS）によって暗号化されます。</li>
+        <li>本サービスのソースコードはオープンソースとして公開しており、データの取り扱いに関する実装は<a href="/open-source">オープンソースについて</a>から確認できます。</li>
       </ul>
 
       <h3>6. 連携解除およびデータ削除</h3>
@@ -628,6 +631,76 @@ export function renderTermsPage(
       <p>
         本規約は必要に応じて変更されることがあります。本規約の解釈および適用は日本法に準拠するものとします。
       </p>
+    </article>
+    `,
+  });
+}
+
+export function renderOpenSourcePage(
+  publicBaseUrl: string = DEFAULT_PUBLIC_BASE_URL
+): string {
+  const repoUrl = REPOSITORY_URL.replace(/\/+$/, "");
+  const licenseUrl = `${repoUrl}/blob/main/LICENSE`;
+  const issuesUrl = `${repoUrl}/issues`;
+  const securityUrl = `${repoUrl}/blob/main/SECURITY.md`;
+
+  return renderLayout({
+    title: `オープンソースについて | ${SERVICE_NAME}`,
+    description: `${SERVICE_NAME}のオープンソース公開（GitHubリポジトリ）およびMITライセンスについて。`,
+    publicBaseUrl,
+    path: "/open-source",
+    body: `
+    <article class="card legal">
+      <h1>オープンソースについて</h1>
+      <p>
+        ${escapeHtml(SERVICE_NAME)}は、オープンソースソフトウェア（OSS）としてソースコードを公開しています。
+        YouTubeアカウントから取得するデータの範囲や、認証・暗号化の仕組みを誰でも確認できます。
+      </p>
+
+      <h3>1. GitHub リポジトリ</h3>
+      <div class="callout">
+        <p style="margin-bottom: 12px;">
+          ソースコードおよび設計ドキュメントは GitHub 上で公開しています。<br />
+          <a href="${escapeHtml(repoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(repoUrl)}</a>
+        </p>
+        <div class="actions" style="margin-top: 0;">
+          <a class="btn btn-primary" href="${escapeHtml(repoUrl)}" target="_blank" rel="noopener noreferrer">GitHubでソースコードを見る</a>
+        </div>
+      </div>
+
+      <h3>2. ライセンス</h3>
+      <p>
+        本プロジェクトのソースコードは <strong>MIT License</strong> のもとで公開されています。
+        著作権表示およびライセンス条文を保持することを条件に、利用・複製・改変・再配布（商用利用を含む）が可能です。なお、ソフトウェアは無保証（AS IS）で提供されます。
+      </p>
+      <p>
+        ライセンス全文はリポジトリ内の
+        <a href="${escapeHtml(licenseUrl)}" target="_blank" rel="noopener noreferrer">LICENSE</a>
+        をご確認ください。
+      </p>
+
+      <h3>3. ご自身での運用・フィードバック</h3>
+      <ul>
+        <li>
+          <strong>セルフホスト</strong>：ご自身の Cloudflare アカウントと Google Cloud プロジェクトを使って、独自ドメインで ${escapeHtml(SERVICE_NAME)} を運用することも可能です。手順はリポジトリの README に記載しています。
+        </li>
+        <li>
+          <strong>不具合報告・機能要望</strong>：バグの報告や改善のアイデアは
+          <a href="${escapeHtml(issuesUrl)}" target="_blank" rel="noopener noreferrer">GitHub Issues</a>
+          からお寄せください。
+        </li>
+        <li>
+          <strong>セキュリティに関する報告</strong>：脆弱性を発見された場合は公開 Issue には投稿せず、
+          <a href="${escapeHtml(securityUrl)}" target="_blank" rel="noopener noreferrer">SECURITY.md</a>
+          に記載の方法、または
+          <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a>
+          まで非公開でご連絡ください。
+        </li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn btn-secondary" href="/">トップページへ戻る</a>
+      </div>
     </article>
     `,
   });

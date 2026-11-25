@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   renderHomePage,
+  renderOpenSourcePage,
   renderPartialGrantErrorPage,
   renderPrivacyPolicyPage,
   renderTermsPage,
@@ -15,6 +16,8 @@ describe("web pages", () => {
     expect(html).toContain("/favicon.ico");
     expect(html).toContain("/privacy");
     expect(html).toContain("/terms");
+    expect(html).toContain("/open-source");
+    expect(html).toContain("ソースコードも公開しています");
     expect(html).toContain(
       '<meta property="og:image" content="https://chansight.nseto.com/og-image.png" />'
     );
@@ -35,12 +38,26 @@ describe("web pages", () => {
     expect(html).toContain("学習");
     expect(html).toContain("AES-256-GCM");
     expect(html).toContain("support-chansight@nseto.com");
+    expect(html).toContain("/open-source");
   });
 
   it("renders terms of service referencing YouTube Terms", () => {
     const html = renderTermsPage();
     expect(html).toContain("利用規約");
     expect(html).toContain("YouTube");
+  });
+
+  it("renders open-source page with GitHub repository and MIT License information", () => {
+    const html = renderOpenSourcePage("https://chansight.nseto.com");
+    expect(html).toContain("オープンソースについて");
+    expect(html).toContain("https://github.com/nseto-swdev/chansight");
+    expect(html).toContain("https://github.com/nseto-swdev/chansight/blob/main/LICENSE");
+    expect(html).toContain("https://github.com/nseto-swdev/chansight/issues");
+    expect(html).toContain("https://github.com/nseto-swdev/chansight/blob/main/SECURITY.md");
+    expect(html).toContain("MIT License");
+    expect(html).toContain(
+      '<meta property="og:url" content="https://chansight.nseto.com/open-source" />'
+    );
   });
 
   it("renders partial grant error page listing missing scopes and retry link", () => {

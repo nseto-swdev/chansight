@@ -105,7 +105,7 @@ describe("auth and web handlers", () => {
     vi.unstubAllGlobals();
   });
 
-  it("serves /, /privacy, /terms, and /health without authentication", async () => {
+  it("serves /, /privacy, /terms, /open-source, and /health without authentication", async () => {
     const app = createDefaultApp();
     const { env } = createMockEnv();
 
@@ -129,6 +129,15 @@ describe("auth and web handlers", () => {
     );
     expect(termsRes.status).toBe(200);
     expect(await termsRes.text()).toContain("利用規約");
+
+    const ossRes = await app.fetch(
+      new Request("https://chansight.nseto.com/open-source"),
+      env
+    );
+    expect(ossRes.status).toBe(200);
+    const ossHtml = await ossRes.text();
+    expect(ossHtml).toContain("https://github.com/nseto-swdev/chansight");
+    expect(ossHtml).toContain("MIT License");
 
     const healthRes = await app.fetch(
       new Request("https://chansight.nseto.com/health"),

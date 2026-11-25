@@ -13,6 +13,8 @@ chansight/
 │       └── ci.yml                 # GitHub Actions CI (typecheck / test)
 ├── docs/
 │   └── ARCHITECTURE.md            # 本ドキュメント（設計・ファイル構成）
+├── scripts/
+│   └── write-build-info.mjs       # ビルド時に Git ハッシュ + UTC 日時 (`<hash>-YYYYMMDD-HHMMZ`) を生成
 ├── src/
 │   ├── index.ts                   # Worker エントリポイント（OAuthProvider 構成・tokenExchangeCallback）
 │   ├── config.ts                  # サービス名・URL・必須 Google スコープ・日本語ラベル定義
@@ -25,8 +27,9 @@ chansight/
 │   │   └── token-crypto.ts        # Web Crypto API による AES-256-GCM 暗号化 / 復号
 │   ├── mcp/
 │   │   ├── handler.ts             # ステートレス Streamable HTTP ハンドラ（Durable Objects 不使用）
-│   │   └── server.ts              # McpServer ファクトリと 4 つの MCP ツール定義
+│   │   └── server.ts              # McpServer ファクトリと 7 つの MCP ツール定義
 │   ├── web/
+│   │   ├── icons.ts               # ChanSight 専用アイコン資産（SVG / ICO / PNG 128px・180px）
 │   │   └── pages.ts               # 日本語 HTML ページ生成（トップ / プライバシー / 利用規約 / 同意 / エラー）
 │   └── youtube/
 │       ├── client.ts              # YouTube Analytics API & Data API v3 クライアント
@@ -65,7 +68,7 @@ Cloudflare の無料枠で安定運用するため、**単一 Cloudflare Worker 
 
 ```mermaid
 flowchart LR
-    Client["AI クライアント<br/>(ChatGPT / Claude 等)"]
+    Client["AI クライアント<br/>(ChatGPT / Muse 等)"]
     Worker["Cloudflare Worker<br/>(OAuthProvider + Hono + MCP)"]
     KV[("Cloudflare KV<br/>OAUTH_KV")]
     GoogleAuth["Google OAuth 2.0"]
@@ -85,7 +88,7 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-    participant C as AIクライアント (ChatGPT / Claude)
+    participant C as AIクライアント (ChatGPT / Muse)
     participant W as ChanSight Worker
     participant KV as Cloudflare KV
     participant G as Google OAuth
@@ -121,10 +124,10 @@ sequenceDiagram
 
 ## 5. ストレージと暗号化設計（`OAUTH_KV`）
 
-| キー種別 | 管理者 | 保存内容・保護方式 |
-| --- | --- | --- |
-| `client:*`, `grant:*`, `token:*` 等 | `@cloudflare/workers-oauth-provider` | トークンはハッシュ化保存、`props` はトークン鍵で暗号化 |
-| `google_tokens:<userId>` | `src/auth/token-store.ts` | Google `accessToken` / `refreshToken` / `expiresAt` / `scope` の JSON を `TOKEN_ENCRYPTION_KEY` で **AES-256-GCM 暗号化**（`v1.<iv>.<ciphertext>`、ランダム 12 バイト IV） |
+| キー種別                            | 管理者                               | 保存内容・保護方式                                                                                                                                                         |
+| ----------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client:*`, `grant:*`, `token:*` 等 | `@cloudflare/workers-oauth-provider` | トークンはハッシュ化保存、`props` はトークン鍵で暗号化                                                                                                                     |
+| `google_tokens:<userId>`            | `src/auth/token-store.ts`            | Google `accessToken` / `refreshToken` / `expiresAt` / `scope` の JSON を `TOKEN_ENCRYPTION_KEY` で **AES-256-GCM 暗号化**（`v1.<iv>.<ciphertext>`、ランダム 12 バイト IV） |
 
 ※ YouTube Analytics の集計結果・動画メタデータは KV や DB に一切永続保存しません。
 

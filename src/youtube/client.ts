@@ -5,7 +5,14 @@ import {
 import {
   formatMinutesToHoursJa,
   formatSecondsJa,
+  parseIsoDurationToSeconds,
   resolveDateRange,
+  resolveMonthlyDateRange,
+  translateAgeGroup,
+  translateContentType,
+  translateDeviceType,
+  translateGender,
+  translateSubscribedStatus,
   translateTrafficSource,
 } from "./formatters.js";
 
@@ -115,6 +122,88 @@ export interface VideoAnalyticsResult {
     likes: number;
     comments: number;
   };
+}
+
+export interface RecentVideoItem {
+  videoId: string;
+  title: string;
+  publishedAt: string | null;
+  url: string;
+  contentKind: "live" | "short" | "video";
+  durationSeconds: number | null;
+  durationFormatted: string | null;
+  views: number;
+  likes: number;
+  comments: number;
+}
+
+export interface RecentVideosResult {
+  channelId: string;
+  channelTitle: string;
+  videos: RecentVideoItem[];
+}
+
+export interface TimeSeriesPoint {
+  date: string;
+  views: number;
+  estimatedMinutesWatched: number;
+  estimatedHoursWatched: number;
+  averageViewDurationSeconds: number;
+  averageViewDurationFormatted: string;
+  subscribersGained: number;
+  subscribersLost: number;
+  netSubscribers: number;
+}
+
+export interface DailyMetricsResult {
+  granularity: "day" | "month";
+  period: { startDate: string; endDate: string };
+  totals: {
+    views: number;
+    estimatedMinutesWatched: number;
+    estimatedHoursWatched: number;
+    subscribersGained: number;
+    subscribersLost: number;
+    netSubscribers: number;
+  };
+  series: TimeSeriesPoint[];
+}
+
+export type BreakdownType =
+  | "subscribedStatus"
+  | "contentType"
+  | "demographics"
+  | "country"
+  | "device"
+  | "searchTerms"
+  | "externalUrls";
+
+export interface BreakdownRow {
+  key: string;
+  labelJa: string;
+  views?: number;
+  viewSharePercent?: number;
+  estimatedMinutesWatched?: number;
+  estimatedHoursWatched?: number;
+  watchTimeSharePercent?: number;
+  averageViewDurationSeconds?: number;
+  averageViewDurationFormatted?: string;
+  likes?: number;
+  subscribersGained?: number;
+  subscribersLost?: number;
+  netSubscribers?: number;
+  viewerPercentage?: number;
+  ageGroup?: string;
+  gender?: string;
+}
+
+export interface AudienceAndFormatBreakdownResult {
+  breakdown: BreakdownType;
+  period: { startDate: string; endDate: string };
+  videoId?: string;
+  totalViews?: number;
+  totalEstimatedMinutesWatched?: number;
+  items: BreakdownRow[];
 }
 
 interface AnalyticsReportResponse {
@@ -572,6 +661,427 @@ export class YouTubeClient {
         netSubscribers: subscribersGained - subscribersLost,
       },
       lifetimeStats: meta?.lifetimeStats,
+    };
+  }
+
+  /**
+   * Lists the channel's most recently uploaded videos/streams using
+   * `channels.list` + `playlistItems.list` + `videos.list` (avoids 100-unit `search.list`).
+   */
+  async getRecentVideos(params?: {
+    maxResults?: number;
+  }): Promise<RecentVideosResult> {
+    const maxResults = Math.min(Math.max(params?.maxResults ?? 10, 1), 50);
+
+    const channelUrl = new URL(`${YOUTUBE_DATA_API_BASE}/channels`);
+    channelUrl.searchParams.set("part", "snippet,contentDetails");
+    channelUrl.searchParams.set("mine", "true");
+
+    const channelData = await this.requestJson<{
+      items?: Array<{
+        id: string;
+        snippet?: { title?: string };
+        contentDetails?: {
+          relatedPlaylists?: { uploads?: string };
+        };
+      }>;
+    }>(channelUrl.toString());
+
+    const channel = channelData.items?.[0];
+    if (!channel) {
+      throw new YouTubeApiError(
+        "連携されたGoogleアカウントにYouTubeチャンネルが見つかりませんでした。",
+        404,
+        "channelNotFound"
+      );
+    }
+
+    const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
+    if (!uploadsPlaylistId) {
+      return {
+        channelId: channel.id,
+        channelTitle: channel.snippet?.title ?? "（チャンネル名不明）",
+        videos: [],
+      };
+    }
+
+    const playlistUrl = new URL(`${YOUTUBE_DATA_API_BASE}/playlistItems`);
+    playlistUrl.searchParams.set("part", "snippet,contentDetails");
+    playlistUrl.searchParams.set("playlistId", uploadsPlaylistId);
+    playlistUrl.searchParams.set("maxResults", String(maxResults));
+
+    const playlistData = await this.requestJson<{
+      items?: Array<{
+        snippet?: {
+          title?: string;
+          publishedAt?: string;
+          resourceId?: { videoId?: string };
+        };
+        contentDetails?: {
+          videoId?: string;
+          videoPublishedAt?: string;
+        };
+      }>;
+    }>(playlistUrl.toString());
+
+    const rawItems = playlistData.items ?? [];
+    const videoIds = rawItems
+      .map((item) => item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId ?? "")
+      .filter(Boolean);
+
+    if (videoIds.length === 0) {
+      return {
+        channelId: channel.id,
+        channelTitle: channel.snippet?.title ?? "（チャンネル名不明）",
+        videos: [],
+      };
+    }
+
+    const videosUrl = new URL(`${YOUTUBE_DATA_API_BASE}/videos`);
+    videosUrl.searchParams.set(
+      "part",
+      "snippet,statistics,contentDetails,liveStreamingDetails"
+    );
+    videosUrl.searchParams.set("id", videoIds.join(","));
+
+    const videosData = await this.requestJson<{
+      items?: Array<{
+        id: string;
+        snippet?: { title?: string; publishedAt?: string };
+        statistics?: {
+          viewCount?: string;
+          likeCount?: string;
+          commentCount?: string;
+        };
+        contentDetails?: { duration?: string };
+        liveStreamingDetails?: Record<string, unknown>;
+      }>;
+    }>(videosUrl.toString());
+
+    const detailMap = new Map(
+      (videosData.items ?? []).map((item) => [item.id, item])
+    );
+
+    const videos: RecentVideoItem[] = rawItems
+      .map((item) => {
+        const videoId =
+          item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId ?? "";
+        if (!videoId) return null;
+        const detail = detailMap.get(videoId);
+        const durationSeconds = parseIsoDurationToSeconds(
+          detail?.contentDetails?.duration
+        );
+        const isLive = Boolean(detail?.liveStreamingDetails);
+        const contentKind: RecentVideoItem["contentKind"] = isLive
+          ? "live"
+          : durationSeconds !== null && durationSeconds > 0 && durationSeconds <= 61
+            ? "short"
+            : "video";
+
+        return {
+          videoId,
+          title:
+            detail?.snippet?.title ??
+            item.snippet?.title ??
+            "（タイトル不明）",
+          publishedAt:
+            detail?.snippet?.publishedAt ??
+            item.contentDetails?.videoPublishedAt ??
+            item.snippet?.publishedAt ??
+            null,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          contentKind,
+          durationSeconds,
+          durationFormatted:
+            durationSeconds !== null ? formatSecondsJa(durationSeconds) : null,
+          views: toNumber(detail?.statistics?.viewCount),
+          likes: toNumber(detail?.statistics?.likeCount),
+          comments: toNumber(detail?.statistics?.commentCount),
+        };
+      })
+      .filter((v): v is RecentVideoItem => v !== null);
+
+    return {
+      channelId: channel.id,
+      channelTitle: channel.snippet?.title ?? "（チャンネル名不明）",
+      videos,
+    };
+  }
+
+  /**
+   * Returns daily or monthly time-series metrics for the channel (0 Data API units).
+   */
+  async getDailyMetrics(params?: {
+    startDate?: string;
+    endDate?: string;
+    granularity?: "day" | "month";
+  }): Promise<DailyMetricsResult> {
+    const granularity = params?.granularity ?? "day";
+    const period =
+      granularity === "month"
+        ? resolveMonthlyDateRange(params?.startDate, params?.endDate, this.now())
+        : resolveDateRange(params?.startDate, params?.endDate, this.now());
+
+    const analyticsUrl = new URL(`${YOUTUBE_ANALYTICS_API_BASE}/reports`);
+    analyticsUrl.searchParams.set("ids", "channel==MINE");
+    analyticsUrl.searchParams.set("startDate", period.startDate);
+    analyticsUrl.searchParams.set("endDate", period.endDate);
+    analyticsUrl.searchParams.set("dimensions", granularity);
+    analyticsUrl.searchParams.set(
+      "metrics",
+      "views,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost"
+    );
+    analyticsUrl.searchParams.set("sort", granularity);
+
+    const report = await this.requestJson<AnalyticsReportResponse>(
+      analyticsUrl.toString()
+    );
+
+    const rows = report.rows ?? [];
+    const series: TimeSeriesPoint[] = rows.map((row) => {
+      const mapped = mapRowByColumnName(report.columnHeaders, row);
+      const views = toNumber(mapped["views"]);
+      const minutes = toNumber(mapped["estimatedMinutesWatched"]);
+      const avgDuration = toNumber(mapped["averageViewDuration"]);
+      const gained = toNumber(mapped["subscribersGained"]);
+      const lost = toNumber(mapped["subscribersLost"]);
+
+      return {
+        date: String(mapped[granularity] ?? ""),
+        views,
+        estimatedMinutesWatched: minutes,
+        estimatedHoursWatched: roundTo(minutes / 60, 2),
+        averageViewDurationSeconds: avgDuration,
+        averageViewDurationFormatted: formatSecondsJa(avgDuration),
+        subscribersGained: gained,
+        subscribersLost: lost,
+        netSubscribers: gained - lost,
+      };
+    });
+
+    const totalViews = series.reduce((s, p) => s + p.views, 0);
+    const totalMinutes = series.reduce(
+      (s, p) => s + p.estimatedMinutesWatched,
+      0
+    );
+    const totalGained = series.reduce((s, p) => s + p.subscribersGained, 0);
+    const totalLost = series.reduce((s, p) => s + p.subscribersLost, 0);
+
+    return {
+      granularity,
+      period,
+      totals: {
+        views: totalViews,
+        estimatedMinutesWatched: totalMinutes,
+        estimatedHoursWatched: roundTo(totalMinutes / 60, 2),
+        subscribersGained: totalGained,
+        subscribersLost: totalLost,
+        netSubscribers: totalGained - totalLost,
+      },
+      series,
+    };
+  }
+
+  /**
+   * Returns audience demographics, subscriber status, content format (live/shorts/video),
+   * country, device, search terms, or external URL breakdowns (0 Data API units).
+   */
+  async getAudienceAndFormatBreakdown(params: {
+    breakdown: BreakdownType;
+    startDate?: string;
+    endDate?: string;
+    videoId?: string;
+    maxResults?: number;
+  }): Promise<AudienceAndFormatBreakdownResult> {
+    const period = resolveDateRange(params.startDate, params.endDate, this.now());
+    const normalizedVideoId = params.videoId
+      ? normalizeVideoId(params.videoId)
+      : undefined;
+
+    const analyticsUrl = new URL(`${YOUTUBE_ANALYTICS_API_BASE}/reports`);
+    analyticsUrl.searchParams.set("ids", "channel==MINE");
+    analyticsUrl.searchParams.set("startDate", period.startDate);
+    analyticsUrl.searchParams.set("endDate", period.endDate);
+
+    const filters: string[] = [];
+    if (normalizedVideoId) {
+      filters.push(`video==${normalizedVideoId}`);
+    }
+
+    switch (params.breakdown) {
+      case "subscribedStatus":
+        analyticsUrl.searchParams.set("dimensions", "subscribedStatus");
+        analyticsUrl.searchParams.set(
+          "metrics",
+          "views,estimatedMinutesWatched,averageViewDuration"
+        );
+        analyticsUrl.searchParams.set("sort", "-views");
+        break;
+      case "contentType":
+        analyticsUrl.searchParams.set("dimensions", "creatorContentType");
+        analyticsUrl.searchParams.set(
+          "metrics",
+          "views,estimatedMinutesWatched,averageViewDuration,likes,subscribersGained,subscribersLost"
+        );
+        analyticsUrl.searchParams.set("sort", "-views");
+        break;
+      case "demographics":
+        analyticsUrl.searchParams.set("dimensions", "ageGroup,gender");
+        analyticsUrl.searchParams.set("metrics", "viewerPercentage");
+        analyticsUrl.searchParams.set("sort", "gender,ageGroup");
+        break;
+      case "country": {
+        const limit = Math.min(Math.max(params.maxResults ?? 20, 1), 50);
+        analyticsUrl.searchParams.set("dimensions", "country");
+        analyticsUrl.searchParams.set(
+          "metrics",
+          "views,estimatedMinutesWatched,averageViewDuration,subscribersGained"
+        );
+        analyticsUrl.searchParams.set("sort", "-views");
+        analyticsUrl.searchParams.set("maxResults", String(limit));
+        break;
+      }
+      case "device":
+        analyticsUrl.searchParams.set("dimensions", "deviceType");
+        analyticsUrl.searchParams.set("metrics", "views,estimatedMinutesWatched");
+        analyticsUrl.searchParams.set("sort", "-views");
+        break;
+      case "searchTerms": {
+        const limit = Math.min(Math.max(params.maxResults ?? 20, 1), 25);
+        analyticsUrl.searchParams.set(
+          "dimensions",
+          "insightTrafficSourceDetail"
+        );
+        analyticsUrl.searchParams.set("metrics", "views,estimatedMinutesWatched");
+        analyticsUrl.searchParams.set("sort", "-views");
+        analyticsUrl.searchParams.set("maxResults", String(limit));
+        filters.push("insightTrafficSourceType==YT_SEARCH");
+        break;
+      }
+      case "externalUrls": {
+        const limit = Math.min(Math.max(params.maxResults ?? 20, 1), 25);
+        analyticsUrl.searchParams.set(
+          "dimensions",
+          "insightTrafficSourceDetail"
+        );
+        analyticsUrl.searchParams.set("metrics", "views,estimatedMinutesWatched");
+        analyticsUrl.searchParams.set("sort", "-views");
+        analyticsUrl.searchParams.set("maxResults", String(limit));
+        filters.push("insightTrafficSourceType==EXT_URL");
+        break;
+      }
+    }
+
+    if (filters.length > 0) {
+      analyticsUrl.searchParams.set("filters", filters.join(";"));
+    }
+
+    const report = await this.requestJson<AnalyticsReportResponse>(
+      analyticsUrl.toString()
+    );
+    const mappedRows = (report.rows ?? []).map((row) =>
+      mapRowByColumnName(report.columnHeaders, row)
+    );
+
+    if (params.breakdown === "demographics") {
+      const items: BreakdownRow[] = mappedRows.map((row) => {
+        const ageGroup = String(row["ageGroup"] ?? "");
+        const gender = String(row["gender"] ?? "");
+        return {
+          key: `${ageGroup}:${gender}`,
+          labelJa: `${translateGender(gender)}・${translateAgeGroup(ageGroup)}`,
+          ageGroup,
+          gender,
+          viewerPercentage: roundTo(toNumber(row["viewerPercentage"]), 2),
+        };
+      });
+      return {
+        breakdown: params.breakdown,
+        period,
+        videoId: normalizedVideoId,
+        items,
+      };
+    }
+
+    const totalViews = mappedRows.reduce(
+      (sum, row) => sum + toNumber(row["views"]),
+      0
+    );
+    const totalMinutes = mappedRows.reduce(
+      (sum, row) => sum + toNumber(row["estimatedMinutesWatched"]),
+      0
+    );
+
+    const items: BreakdownRow[] = mappedRows.map((row) => {
+      let key = "";
+      let labelJa = "";
+
+      switch (params.breakdown) {
+        case "subscribedStatus":
+          key = String(row["subscribedStatus"] ?? "");
+          labelJa = translateSubscribedStatus(key);
+          break;
+        case "contentType":
+          key = String(row["creatorContentType"] ?? "");
+          labelJa = translateContentType(key);
+          break;
+        case "country":
+          key = String(row["country"] ?? "");
+          labelJa = key;
+          break;
+        case "device":
+          key = String(row["deviceType"] ?? "");
+          labelJa = translateDeviceType(key);
+          break;
+        case "searchTerms":
+        case "externalUrls":
+          key = String(row["insightTrafficSourceDetail"] ?? "");
+          labelJa = key;
+          break;
+      }
+
+      const views = toNumber(row["views"]);
+      const minutes = toNumber(row["estimatedMinutesWatched"]);
+      const item: BreakdownRow = {
+        key,
+        labelJa,
+        views,
+        viewSharePercent:
+          totalViews > 0 ? roundTo((views / totalViews) * 100, 1) : 0,
+        estimatedMinutesWatched: minutes,
+        estimatedHoursWatched: roundTo(minutes / 60, 2),
+        watchTimeSharePercent:
+          totalMinutes > 0 ? roundTo((minutes / totalMinutes) * 100, 1) : 0,
+      };
+
+      if (row["averageViewDuration"] !== undefined) {
+        const avgSec = toNumber(row["averageViewDuration"]);
+        item.averageViewDurationSeconds = avgSec;
+        item.averageViewDurationFormatted = formatSecondsJa(avgSec);
+      }
+      if (row["likes"] !== undefined) {
+        item.likes = toNumber(row["likes"]);
+      }
+      if (row["subscribersGained"] !== undefined) {
+        const gained = toNumber(row["subscribersGained"]);
+        item.subscribersGained = gained;
+        if (row["subscribersLost"] !== undefined) {
+          const lost = toNumber(row["subscribersLost"]);
+          item.subscribersLost = lost;
+          item.netSubscribers = gained - lost;
+        }
+      }
+
+      return item;
+    });
+
+    return {
+      breakdown: params.breakdown,
+      period,
+      videoId: normalizedVideoId,
+      totalViews,
+      totalEstimatedMinutesWatched: totalMinutes,
+      items,
     };
   }
 

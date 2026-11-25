@@ -35,7 +35,40 @@ async function callMcpJsonRpc(
 }
 
 describe("MCP Server (Stateless Streamable HTTP)", () => {
-  it("lists all 4 required YouTube Analytics tools", async () => {
+  it("exposes serverInfo icons on initialize", async () => {
+    const youtube = new YouTubeClient({
+      getAccessToken: async () => "ya29.mock",
+      fetchImpl: vi.fn(),
+    });
+
+    const { status, json } = await callMcpJsonRpc(youtube, {
+      jsonrpc: "2.0",
+      id: 0,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "test-client", version: "1.0.0" },
+      },
+    });
+
+    expect(status).toBe(200);
+    expect(json.result.serverInfo.name).toBe("ChanSight");
+    expect(json.result.serverInfo.icons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          src: "https://chansight.nseto.com/favicon.svg",
+          mimeType: "image/svg+xml",
+        }),
+        expect.objectContaining({
+          src: "https://chansight.nseto.com/icon-128.png",
+          mimeType: "image/png",
+        }),
+      ])
+    );
+  });
+
+  it("lists all 7 YouTube Analytics tools", async () => {
     const youtube = new YouTubeClient({
       getAccessToken: async () => "ya29.mock",
       fetchImpl: vi.fn(),
@@ -54,6 +87,9 @@ describe("MCP Server (Stateless Streamable HTTP)", () => {
       "get_top_videos",
       "get_traffic_sources",
       "get_video_analytics",
+      "get_recent_videos",
+      "get_daily_metrics",
+      "get_audience_and_format_breakdown",
     ]);
   });
 

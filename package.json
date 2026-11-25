@@ -9,9 +9,14 @@
   },
   "description": "ChanSight (チャンサイト) - Multi-tenant YouTube Analytics Remote MCP Server on Cloudflare Workers",
   "scripts": {
+    "build:version": "node scripts/write-build-info.mjs",
+    "predev": "node scripts/write-build-info.mjs",
     "dev": "wrangler dev --host localhost:8787 --port 8787",
+    "predeploy": "node scripts/write-build-info.mjs",
     "deploy": "wrangler deploy",
+    "pretypecheck": "node scripts/write-build-info.mjs",
     "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/write-build-info.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "cf-typegen": "wrangler types"

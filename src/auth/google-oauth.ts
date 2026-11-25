@@ -7,7 +7,7 @@ import {
 } from "../config.js";
 
 export const REAUTH_GUIDANCE_JA =
-  "Googleアカウントの認証が失効しました（パスワード変更やアクセス許可の取り消しなどが原因の可能性があります）。お使いのAIクライアント（ChatGPT / Claude等）の設定から ChanSight（チャンサイト）を一度解除し、再度Googleアカウントと連携し直してください。";
+  "Googleアカウントの認証が失効しました（パスワード変更やアクセス許可の取り消しなどが原因の可能性があります）。お使いのAIクライアント（ChatGPT / Muse等）の設定から ChanSight（チャンサイト）を一度解除し、再度Googleアカウントと連携し直してください。";
 
 export class GoogleTokenInvalidGrantError extends Error {
   readonly code = "invalid_grant";

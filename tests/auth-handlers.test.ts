@@ -135,7 +135,44 @@ describe("auth and web handlers", () => {
       env
     );
     expect(healthRes.status).toBe(200);
-    expect(await healthRes.json()).toEqual({ ok: true, service: "ChanSight" });
+    expect(await healthRes.json()).toEqual({
+      ok: true,
+      service: "ChanSight",
+      version: expect.stringMatching(/^[0-9a-f]{7}-\d{8}-\d{4}Z$/),
+    });
+
+    const svgRes = await app.fetch(
+      new Request("https://chansight.nseto.com/favicon.svg"),
+      env
+    );
+    expect(svgRes.status).toBe(200);
+    expect(svgRes.headers.get("Content-Type")).toContain("image/svg+xml");
+    expect(await svgRes.text()).toContain("<svg");
+
+    const icoRes = await app.fetch(
+      new Request("https://chansight.nseto.com/favicon.ico"),
+      env
+    );
+    expect(icoRes.status).toBe(200);
+    expect(icoRes.headers.get("Content-Type")).toContain("image/x-icon");
+    const icoBytes = new Uint8Array(await icoRes.arrayBuffer());
+    expect(icoBytes[2]).toBe(1); // ICO type = 1
+
+    const png128Res = await app.fetch(
+      new Request("https://chansight.nseto.com/icon-128.png"),
+      env
+    );
+    expect(png128Res.status).toBe(200);
+    expect(png128Res.headers.get("Content-Type")).toContain("image/png");
+    const pngBytes = new Uint8Array(await png128Res.arrayBuffer());
+    expect(Array.from(pngBytes.slice(0, 4))).toEqual([137, 80, 78, 71]);
+
+    const appleRes = await app.fetch(
+      new Request("https://chansight.nseto.com/apple-touch-icon.png"),
+      env
+    );
+    expect(appleRes.status).toBe(200);
+    expect(appleRes.headers.get("Content-Type")).toContain("image/png");
   });
 
   it("renders Japanese consent page on GET /authorize and redirects to Google on approval", async () => {

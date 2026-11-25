@@ -28,7 +28,7 @@ export async function handleMcpRequest(
     forceRefreshAccessToken: () => forceRefreshGoogleAccessToken(tokenOptions),
   });
 
-  const server = createYouTubeMcpServer(youtube);
+  const server = createYouTubeMcpServer(youtube, env.PUBLIC_BASE_URL);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

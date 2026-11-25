@@ -11,8 +11,11 @@ describe("web pages", () => {
     const html = renderHomePage("https://chansight.nseto.com");
     expect(html).toContain("https://chansight.nseto.com/mcp");
     expect(html).toContain("かんたん3ステップ");
+    expect(html).toContain("/favicon.svg");
+    expect(html).toContain("/favicon.ico");
     expect(html).toContain("/privacy");
     expect(html).toContain("/terms");
+    expect(html).toMatch(/[0-9a-f]{7}-\d{8}-\d{4}Z/);
   });
 
   it("renders privacy policy with Google Limited Use and no AI training statement", () => {

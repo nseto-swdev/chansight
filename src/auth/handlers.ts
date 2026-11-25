@@ -10,7 +10,14 @@ import {
   MCP_SCOPES_SUPPORTED,
   SERVICE_NAME,
 } from "../config.js";
+import { BUILD_VERSION } from "../generated/build-info.js";
 import type { AuthProps, OAuthHandlerEnv } from "../types.js";
+import {
+  FAVICON_SVG,
+  getAppleTouchIconPngBytes,
+  getFaviconIcoBytes,
+  getIcon128PngBytes,
+} from "../web/icons.js";
 import {
   renderAuthorizeConsentPage,
   renderHomePage,
@@ -86,7 +93,47 @@ export function createDefaultApp() {
   });
 
   app.get("/health", (c) => {
-    return c.json({ ok: true, service: SERVICE_NAME });
+    return c.json({ ok: true, service: SERVICE_NAME, version: BUILD_VERSION });
+  });
+
+  app.get("/favicon.svg", () => {
+    return new Response(FAVICON_SVG, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  });
+
+  app.get("/favicon.ico", () => {
+    return new Response(getFaviconIcoBytes(), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/x-icon",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  });
+
+  app.get("/icon-128.png", () => {
+    return new Response(getIcon128PngBytes(), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  });
+
+  app.get("/apple-touch-icon.png", () => {
+    return new Response(getAppleTouchIconPngBytes(), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
   });
 
   app.get("/authorize", async (c) => {

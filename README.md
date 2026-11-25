@@ -1,8 +1,8 @@
 # ChanSight（チャンサイト）
 
-個人 YouTuber・VTuber 向けの **薄くて無料枠に収まるマルチテナント型 YouTube Analytics Remote MCP サーバー**（Cloudflare Workers 上で動作）。
+YouTuber・VTuber 向けの **薄くて無料枠に収まるマルチテナント型 YouTube Analytics Remote MCP サーバー**（Cloudflare Workers 上で動作）。
 
-ChatGPT や Claude などの MCP 対応 AI クライアントにエンドポイント URL を登録して Google ログインするだけで、自分の YouTube チャンネルのアナリティクスを自然な日本語で分析できます。
+ChatGPT や Muse などの MCP 対応 AI クライアントにエンドポイント URL を登録して Google ログインするだけで、自分の YouTube チャンネルのアナリティクスを自然な日本語で分析できます。
 
 - **公開サービス**: https://chansight.nseto.com/
 - **MCP エンドポイント**: `https://chansight.nseto.com/mcp`
@@ -12,7 +12,7 @@ ChatGPT や Claude などの MCP 対応 AI クライアントにエンドポイ�
 ## 主な特徴
 
 - **Cloudflare Workers 無料枠設計**: Durable Objects を使わず、単一 Worker + Cloudflare KV だけの完全ステートレス Streamable HTTP 構成。
-- **OAuth 2.1 完全対応**: `@cloudflare/workers-oauth-provider` を利用し、PKCE (S256)・Dynamic Client Registration (RFC 7591)・Client ID Metadata Documents (CIMD)・RFC 9728 Protected Resource Metadata に対応（ChatGPT / Claude 両対応）。
+- **OAuth 2.1 完全対応**: `@cloudflare/workers-oauth-provider` を利用し、PKCE (S256)・Dynamic Client Registration (RFC 7591)・Client ID Metadata Documents (CIMD)・RFC 9728 Protected Resource Metadata に対応（ChatGPT / Muse 両対応）。
 - **安全なトークン管理**: Google のリフレッシュトークン・アクセストークンは AES-256-GCM で暗号化して KV に保存。アナリティクスデータはサーバーに永続保存しません。
 - **YouTube API 特有のエラー対策**:
   - **部分許可（Partial Grant）検知**: 必須スコープが 1 つでも未許可ならエラー画面を表示し、そのまま再認可へ誘導。
@@ -23,12 +23,15 @@ ChatGPT や Claude などの MCP 対応 AI クライアントにエンドポイ�
 
 ## 提供する MCP ツール
 
-| ツール名 | 概要 | 主なパラメータ |
-| --- | --- | --- |
-| `get_channel_overview` | 指定期間（デフォルト過去 28 日）のチャンネル全体サマリーと基本情報を取得 | `startDate?`, `endDate?` |
-| `get_top_videos` | 再生回数または総再生時間の上位動画一覧（タイトル・公開日を Data API v3 で補完） | `startDate?`, `endDate?`, `maxResults?`, `sortBy?` |
-| `get_traffic_sources` | 流入元別（ブラウジング・関連動画・検索・ショート等）の再生回数・総再生時間・構成比 | `startDate?`, `endDate?`, `maxResults?` |
-| `get_video_analytics` | 指定した動画 ID（または YouTube URL）の詳細指標（平均視聴率・高評価・登録者増減等） | `videoId`, `startDate?`, `endDate?` |
+| ツール名                            | 概要                                                                                                        | 主なパラメータ                                                   |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `get_channel_overview`              | 指定期間（デフォルト過去 28 日）のチャンネル全体サマリーと基本情報を取得                                    | `startDate?`, `endDate?`                                         |
+| `get_top_videos`                    | 再生回数または総再生時間の上位動画一覧（タイトル・公開日を Data API v3 で補完）                             | `startDate?`, `endDate?`, `maxResults?`, `sortBy?`               |
+| `get_traffic_sources`               | 流入元別（ブラウジング・関連動画・検索・ショート等）の再生回数・総再生時間・構成比                          | `startDate?`, `endDate?`, `maxResults?`                          |
+| `get_video_analytics`               | 指定した動画 ID（または YouTube URL）の詳細指標（平均視聴率・高評価・登録者増減等）                         | `videoId`, `startDate?`, `endDate?`                              |
+| `get_recent_videos`                 | 最新の動画・ライブ配信アーカイブ・ショート一覧を新しい順で取得（`search.list` 不使用）                      | `maxResults?`                                                    |
+| `get_daily_metrics`                 | 指定期間の日別（`day`）または月別（`month`）の時系列推移を取得                                              | `startDate?`, `endDate?`, `granularity?`                         |
+| `get_audience_and_format_breakdown` | 登録状態・コンテンツ種別（動画/ショート/ライブ）・年齢/性別・国・デバイス・検索ワード・外部流入元の分解分析 | `breakdown`, `startDate?`, `endDate?`, `videoId?`, `maxResults?` |
 
 ### 使用する Google API スコープ（読み取り専用）
 
@@ -49,10 +52,10 @@ src/
 ├── types.ts              # 環境変数・認証コンテキスト型
 ├── auth/                 # Google OAuth・暗号化トークンストア・Hono ルータ
 ├── crypto/               # AES-256-GCM トークン暗号化
-├── mcp/                  # ステートレス Streamable HTTP ハンドラ & 4 ツール
-├── web/                  # 日本語静的 HTML ページ（/, /privacy, /terms 等）
+├── mcp/                  # ステートレス Streamable HTTP ハンドラ & 7 ツール
+├── web/                  # 日本語静的 HTML ページ（/, /privacy, /terms 等）& アイコン
 └── youtube/              # YouTube Analytics / Data API クライアント & 日本語整形
-tests/                    # Vitest 単体テスト（34 テスト）
+tests/                    # Vitest 単体テスト
 docs/ARCHITECTURE.md      # 詳細アーキテクチャ・ファイル構成ドキュメント
 ```
 
@@ -98,6 +101,7 @@ npm run dev
    - `wrangler.example.jsonc` を参考に `wrangler.jsonc` のドメイン・`PUBLIC_BASE_URL`・KV ID を設定
    - `src/config.ts` の `DEFAULT_PUBLIC_BASE_URL` / `CONTACT_EMAIL` を必要に応じて変更
 3. **Cloudflare KV 作成 & シークレット登録**
+
    ```bash
    npx wrangler login
    npx wrangler kv namespace create OAUTH_KV
@@ -110,6 +114,7 @@ npm run dev
    npx wrangler secret put GOOGLE_CLIENT_SECRET
    npx wrangler secret put TOKEN_ENCRYPTION_KEY
    ```
+
 4. **デプロイ**
    ```bash
    npm run deploy

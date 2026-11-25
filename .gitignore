@@ -4,6 +4,7 @@ node_modules/
 # Build & test outputs
 dist/
 coverage/
+src/generated/
 
 # Cloudflare Wrangler local state & secrets
 .wrangler/

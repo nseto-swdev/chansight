@@ -10,6 +10,9 @@
 	"observability": {
 		"enabled": true
 	},
+	"build": {
+		"command": "node scripts/write-build-info.mjs"
+	},
 	"vars": {
 		"PUBLIC_BASE_URL": "https://chansight.nseto.com"
 	},

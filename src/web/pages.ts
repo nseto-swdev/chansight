@@ -5,6 +5,7 @@ import {
   SERVICE_DISPLAY_NAME,
   SERVICE_NAME,
 } from "../config.js";
+import { BUILD_VERSION } from "../generated/build-info.js";
 
 function escapeHtml(input: string): string {
   return input
@@ -27,6 +28,11 @@ function renderLayout(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(options.title)}</title>
   <meta name="description" content="${escapeHtml(options.description)}" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="128x128" href="/icon-128.png" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#6d4aff" />
   <style>
     :root {
       --bg: #f8f7fc;
@@ -325,7 +331,7 @@ function renderLayout(options: {
   <div class="container">
     <header class="site-header">
       <a class="brand" href="/">
-        <span class="brand-badge">CS</span>
+        <img src="/favicon.svg" alt="" width="36" height="36" style="display: block; border-radius: 9px;" />
         <span>${escapeHtml(SERVICE_DISPLAY_NAME)}</span>
       </a>
       <nav class="header-nav">
@@ -341,7 +347,8 @@ function renderLayout(options: {
         <a href="/privacy">プライバシーポリシー</a>
         <a href="/terms">利用規約</a>
       </div>
-      <p style="margin-top: 8px;">&copy; ${new Date().getUTCFullYear()} ${escapeHtml(SERVICE_DISPLAY_NAME)}</p>
+      <p style="margin-top: 8px; margin-bottom: 4px;">&copy; ${new Date().getUTCFullYear()} ${escapeHtml(SERVICE_DISPLAY_NAME)}</p>
+      <p style="margin: 0; font-size: 0.78rem; opacity: 0.78; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${escapeHtml(BUILD_VERSION)}</p>
     </footer>
   </div>
 </body>
@@ -357,15 +364,15 @@ export function renderHomePage(publicBaseUrl: string): string {
   const mcpUrl = `${normalizedBase}${MCP_ROUTE}`;
 
   return renderLayout({
-    title: `${SERVICE_DISPLAY_NAME} | YouTubeアナリティクスをChatGPTやClaudeで分析`,
+    title: `${SERVICE_DISPLAY_NAME} | YouTubeアナリティクスをChatGPTやMuseで分析`,
     description:
-      "個人YouTuber・VTuber向け。ChatGPTやClaudeにURLを登録してGoogleログインするだけで、YouTubeアナリティクスを自然な日本語で分析できる無料MCPサーバー。",
+      "YouTuber・VTuber向け。ChatGPTやMuseにURLを登録してGoogleログインするだけで、YouTubeアナリティクスを自然な日本語で分析できる無料MCPサーバー。",
     body: `
     <section class="card hero">
-      <span class="pill">個人YouTuber・VTuber向け / 無料</span>
+      <span class="pill">YouTuber・VTuber向け / 無料</span>
       <h1>YouTubeアナリティクスを、<br />いつものAIチャットにそのまま相談。</h1>
       <p class="lead">
-        ${escapeHtml(SERVICE_DISPLAY_NAME)}は、あなたのYouTubeチャンネルの数字をChatGPTやClaudeから直接読み取れるようにする連携ツールです。
+        ${escapeHtml(SERVICE_DISPLAY_NAME)}は、あなたのYouTubeチャンネルの数字をChatGPTやMuseから直接読み取れるようにする連携ツールです。
         難しい設定やCSVダウンロードは不要。普段どおり日本語で話しかけるだけで分析できます。
       </p>
 
@@ -373,7 +380,7 @@ export function renderHomePage(publicBaseUrl: string): string {
         <span class="endpoint-url" id="mcp-url">${escapeHtml(mcpUrl)}</span>
         <button type="button" class="btn btn-copy" id="copy-btn" onclick="copyMcpUrl()">URLをコピー</button>
       </div>
-      <p class="copy-note" id="copy-status">ChatGPTやClaudeの「MCPサーバー（コネクタ / アプリ）」設定にこのURLを貼り付けて使います。</p>
+      <p class="copy-note" id="copy-status">ChatGPTやMuseの「MCPサーバー（コネクタ / アプリ）」設定にこのURLを貼り付けて使います。</p>
     </section>
 
     <section class="card">
@@ -386,7 +393,7 @@ export function renderHomePage(publicBaseUrl: string): string {
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <div class="step-title">ChatGPT / Claude に登録</div>
+          <div class="step-title">ChatGPT / Muse に登録</div>
           <p>お使いのAIツールの設定（コネクタ / アプリ / カスタムMCP追加）を開き、コピーしたURLを貼り付けます。</p>
         </div>
         <div class="step">
@@ -433,7 +440,7 @@ export function renderHomePage(publicBaseUrl: string): string {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(url).then(function() {
             btn.textContent = 'コピーしました！';
-            status.textContent = 'コピー完了！ChatGPTやClaudeの設定画面に貼り付けてください。';
+            status.textContent = 'コピー完了！ChatGPTやMuseの設定画面に貼り付けてください。';
             setTimeout(function() { btn.textContent = 'URLをコピー'; }, 2500);
           });
         }
@@ -465,7 +472,7 @@ export function renderPrivacyPolicyPage(): string {
       <p>本サービスは動画の作成・編集・削除、チャンネル設定の変更などの書き込み権限は一切取得しません。</p>
 
       <h3>2. 情報の利用目的</h3>
-      <p>取得した情報は、利用者が接続したMCP対応AIクライアント（ChatGPT、Claude等）からのリクエストに応答し、利用者自身のYouTubeチャンネル分析結果を表示するためのみに使用します。</p>
+      <p>取得した情報は、利用者が接続したMCP対応AIクライアント（ChatGPT、Muse等）からのリクエストに応答し、利用者自身のYouTubeチャンネル分析結果を表示するためのみに使用します。</p>
 
       <h3>3. Google API Services User Data Policy（Limited Use要件）への準拠</h3>
       <div class="callout">
@@ -539,7 +546,7 @@ export function renderTermsPage(): string {
       <h3>3. 利用者の責任</h3>
       <ul>
         <li>利用者は、自身が正当な管理権限を有するYouTubeチャンネルのみを本サービスに連携するものとします。</li>
-        <li>本サービスを接続するAIクライアント（ChatGPT、Claude等）側でのデータ取り扱いについては、各AIサービスの利用規約・プライバシー設定を利用者自身の責任で確認してください。</li>
+        <li>本サービスを接続するAIクライアント（ChatGPT、Muse等）側でのデータ取り扱いについては、各AIサービスの利用規約・プライバシー設定を利用者自身の責任で確認してください。</li>
       </ul>
 
       <h3>4. 禁止事項</h3>

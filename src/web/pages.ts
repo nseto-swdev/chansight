@@ -418,7 +418,7 @@ export function renderHomePage(publicBaseUrl: string): string {
       <h1>チャンネルの数字を見ながら、<br />AIと作戦会議</h1>
       <p class="lead">
         ${escapeHtml(SERVICE_NAME)}は、あなたのYouTubeアナリティクスをAIチャットにつなぐ無料ツールです。
-        スクショやCSVを用意しなくても、ChatGPT・Claude・Gemini・MuseなどのAIと一緒に配信や動画の振り返りができます。
+        スクショやCSVを用意しなくても、ChatGPT・Claude・Gemini・MuseなどのAIと一緒に配信や動画の振り返りや作戦会議ができます。
       </p>
 
       <div class="endpoint-box">

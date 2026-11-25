@@ -18,6 +18,7 @@ import {
   getFaviconIcoBytes,
   getIcon128PngBytes,
 } from "../web/icons.js";
+import { getOgImagePngBytes } from "../web/og-image.js";
 import {
   renderAuthorizeConsentPage,
   renderHomePage,
@@ -84,12 +85,14 @@ export function createDefaultApp() {
     return htmlResponse(renderHomePage(baseUrl));
   });
 
-  app.get("/privacy", () => {
-    return htmlResponse(renderPrivacyPolicyPage());
+  app.get("/privacy", (c) => {
+    const baseUrl = getBaseUrl(c.env, c.req.url);
+    return htmlResponse(renderPrivacyPolicyPage(baseUrl));
   });
 
-  app.get("/terms", () => {
-    return htmlResponse(renderTermsPage());
+  app.get("/terms", (c) => {
+    const baseUrl = getBaseUrl(c.env, c.req.url);
+    return htmlResponse(renderTermsPage(baseUrl));
   });
 
   app.get("/health", (c) => {
@@ -128,6 +131,16 @@ export function createDefaultApp() {
 
   app.get("/apple-touch-icon.png", () => {
     return new Response(getAppleTouchIconPngBytes(), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  });
+
+  app.get("/og-image.png", () => {
+    return new Response(getOgImagePngBytes(), {
       status: 200,
       headers: {
         "Content-Type": "image/png",

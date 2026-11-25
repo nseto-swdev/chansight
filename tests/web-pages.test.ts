@@ -7,7 +7,7 @@ import {
 } from "../src/web/pages.js";
 
 describe("web pages", () => {
-  it("renders landing page with MCP endpoint URL and 3-step guide", () => {
+  it("renders landing page with MCP endpoint URL, OGP tags, and clean branding", () => {
     const html = renderHomePage("https://chansight.nseto.com");
     expect(html).toContain("https://chansight.nseto.com/mcp");
     expect(html).toContain("かんたん3ステップ");
@@ -15,6 +15,15 @@ describe("web pages", () => {
     expect(html).toContain("/favicon.ico");
     expect(html).toContain("/privacy");
     expect(html).toContain("/terms");
+    expect(html).toContain(
+      '<meta property="og:image" content="https://chansight.nseto.com/og-image.png" />'
+    );
+    expect(html).toContain(
+      '<meta name="twitter:card" content="summary_large_image" />'
+    );
+    expect(html).toContain('<span class="brand-name">ChanSight</span>');
+    expect(html).toContain('<span class="brand-sub">チャンサイト</span>');
+    expect(html).not.toContain("ChanSight（チャンサイト）");
     expect(html).toMatch(/[0-9a-f]{7}-\d{8}-\d{4}Z/);
   });
 

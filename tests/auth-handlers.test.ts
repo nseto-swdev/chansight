@@ -173,6 +173,15 @@ describe("auth and web handlers", () => {
     );
     expect(appleRes.status).toBe(200);
     expect(appleRes.headers.get("Content-Type")).toContain("image/png");
+
+    const ogRes = await app.fetch(
+      new Request("https://chansight.nseto.com/og-image.png"),
+      env
+    );
+    expect(ogRes.status).toBe(200);
+    expect(ogRes.headers.get("Content-Type")).toContain("image/png");
+    const ogBytes = new Uint8Array(await ogRes.arrayBuffer());
+    expect(Array.from(ogBytes.slice(0, 4))).toEqual([137, 80, 78, 71]);
   });
 
   it("renders Japanese consent page on GET /authorize and redirects to Google on approval", async () => {

@@ -1,9 +1,10 @@
 import {
   CONTACT_EMAIL,
+  DEFAULT_PUBLIC_BASE_URL,
   GOOGLE_SCOPE_LABELS_JA,
   MCP_ROUTE,
-  SERVICE_DISPLAY_NAME,
   SERVICE_NAME,
+  SERVICE_NAME_JA,
 } from "../config.js";
 import { BUILD_VERSION } from "../generated/build-info.js";
 
@@ -20,7 +21,20 @@ function renderLayout(options: {
   title: string;
   description: string;
   body: string;
+  publicBaseUrl?: string;
+  path?: string;
 }): string {
+  const normalizedBase = (options.publicBaseUrl ?? DEFAULT_PUBLIC_BASE_URL).replace(
+    /\/+$/,
+    ""
+  );
+  const ogImageUrl = `${normalizedBase}/og-image.png`;
+  const pageUrl =
+    options.path !== undefined ? `${normalizedBase}${options.path}` : undefined;
+  const ogUrlMeta = pageUrl
+    ? `\n  <meta property="og:url" content="${escapeHtml(pageUrl)}" />`
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,6 +42,18 @@ function renderLayout(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(options.title)}</title>
   <meta name="description" content="${escapeHtml(options.description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="${escapeHtml(SERVICE_NAME)}" />
+  <meta property="og:title" content="${escapeHtml(options.title)}" />
+  <meta property="og:description" content="${escapeHtml(options.description)}" />${ogUrlMeta}
+  <meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="${escapeHtml(`${SERVICE_NAME} - チャンネルの数字を見ながら、AIと作戦会議`)}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeHtml(options.title)}" />
+  <meta name="twitter:description" content="${escapeHtml(options.description)}" />
+  <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/png" sizes="128x128" href="/icon-128.png" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -80,11 +106,25 @@ function renderLayout(options: {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      font-weight: 800;
-      font-size: 1.15rem;
       color: var(--text);
     }
     .brand:hover { text-decoration: none; }
+    .brand-text {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .brand-name {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.015em;
+      color: var(--text);
+    }
+    .brand-sub {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
     .brand-badge {
       display: inline-flex;
       align-items: center;
@@ -332,7 +372,10 @@ function renderLayout(options: {
     <header class="site-header">
       <a class="brand" href="/">
         <img src="/favicon.svg" alt="" width="36" height="36" style="display: block; border-radius: 9px;" />
-        <span>${escapeHtml(SERVICE_DISPLAY_NAME)}</span>
+        <span class="brand-text">
+          <span class="brand-name">${escapeHtml(SERVICE_NAME)}</span>
+          <span class="brand-sub">${escapeHtml(SERVICE_NAME_JA)}</span>
+        </span>
       </a>
       <nav class="header-nav">
         <a href="/">トップ</a>
@@ -347,7 +390,7 @@ function renderLayout(options: {
         <a href="/privacy">プライバシーポリシー</a>
         <a href="/terms">利用規約</a>
       </div>
-      <p style="margin-top: 8px; margin-bottom: 4px;">&copy; ${new Date().getUTCFullYear()} ${escapeHtml(SERVICE_DISPLAY_NAME)}</p>
+      <p style="margin-top: 8px; margin-bottom: 4px;">&copy; ${new Date().getUTCFullYear()} ${escapeHtml(SERVICE_NAME)}</p>
       <p style="margin: 0; font-size: 0.78rem; opacity: 0.78; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${escapeHtml(BUILD_VERSION)}</p>
     </footer>
   </div>
@@ -364,15 +407,17 @@ export function renderHomePage(publicBaseUrl: string): string {
   const mcpUrl = `${normalizedBase}${MCP_ROUTE}`;
 
   return renderLayout({
-    title: `${SERVICE_DISPLAY_NAME} | YouTubeの数字を見ながら、AIと作戦会議`,
+    title: `${SERVICE_NAME} | YouTubeの数字を見ながら、AIと作戦会議`,
     description:
-      "YouTuber・VTuber向けの無料YouTubeアナリティクス連携ツール。ChatGPT・Claude・Gemini・MuseなどのAIにURLを登録してGoogleログインするだけで、チャンネルの数字を見ながら振り返りや作戦会議ができます。",
+      "YouTuber・VTuber向けの無料YouTubeアナリティクス連携ツール「ChanSight / チャンサイト」。ChatGPT・Claude・Gemini・MuseなどのAIにURLを登録してGoogleログインするだけで、チャンネルの数字を見ながら振り返りや作戦会議ができます。",
+    publicBaseUrl: normalizedBase,
+    path: "/",
     body: `
     <section class="card hero">
       <span class="pill">YouTuber・VTuber向け / 無料</span>
       <h1>チャンネルの数字を見ながら、<br />AIと作戦会議</h1>
       <p class="lead">
-        ${escapeHtml(SERVICE_DISPLAY_NAME)}は、あなたのYouTubeアナリティクスをAIチャットにつなぐ無料ツールです。
+        ${escapeHtml(SERVICE_NAME)}は、あなたのYouTubeアナリティクスをAIチャットにつなぐ無料ツールです。
         スクショやCSVを用意しなくても、ChatGPT・Claude・Gemini・MuseなどのAIと一緒に配信や動画の振り返りができます。
       </p>
 
@@ -457,16 +502,20 @@ export function renderHomePage(publicBaseUrl: string): string {
   });
 }
 
-export function renderPrivacyPolicyPage(): string {
+export function renderPrivacyPolicyPage(
+  publicBaseUrl: string = DEFAULT_PUBLIC_BASE_URL
+): string {
   return renderLayout({
-    title: `プライバシーポリシー | ${SERVICE_DISPLAY_NAME}`,
-    description: `${SERVICE_DISPLAY_NAME}のプライバシーポリシーおよびGoogle API Services User Data Policy（Limited Use）への準拠について。`,
+    title: `プライバシーポリシー | ${SERVICE_NAME}`,
+    description: `${SERVICE_NAME}のプライバシーポリシーおよびGoogle API Services User Data Policy（Limited Use）への準拠について。`,
+    publicBaseUrl,
+    path: "/privacy",
     body: `
     <article class="card legal">
       <h1>プライバシーポリシー</h1>
       <p>最終更新日: 2026年11月25日</p>
       <p>
-        ${escapeHtml(SERVICE_DISPLAY_NAME)}（以下「本サービス」）は、利用者のプライバシーを尊重し、GoogleアカウントおよびYouTubeから取得するデータを適切かつ安全に取り扱います。
+        ${escapeHtml(SERVICE_NAME)}（以下「本サービス」）は、利用者のプライバシーを尊重し、GoogleアカウントおよびYouTubeから取得するデータを適切かつ安全に取り扱います。
       </p>
 
       <h3>1. 取得する情報と利用するGoogle APIスコープ</h3>
@@ -524,16 +573,20 @@ export function renderPrivacyPolicyPage(): string {
   });
 }
 
-export function renderTermsPage(): string {
+export function renderTermsPage(
+  publicBaseUrl: string = DEFAULT_PUBLIC_BASE_URL
+): string {
   return renderLayout({
-    title: `利用規約 | ${SERVICE_DISPLAY_NAME}`,
-    description: `${SERVICE_DISPLAY_NAME}の利用規約です。`,
+    title: `利用規約 | ${SERVICE_NAME}`,
+    description: `${SERVICE_NAME}の利用規約です。`,
+    publicBaseUrl,
+    path: "/terms",
     body: `
     <article class="card legal">
       <h1>利用規約</h1>
       <p>最終更新日: 2026年11月25日</p>
       <p>
-        本規約は、${escapeHtml(SERVICE_DISPLAY_NAME)}（以下「本サービス」）の利用条件を定めるものです。利用者は本サービスを利用することにより、本規約に同意したものとみなされます。
+        本規約は、${escapeHtml(SERVICE_NAME)}（以下「本サービス」）の利用条件を定めるものです。利用者は本サービスを利用することにより、本規約に同意したものとみなされます。
       </p>
 
       <h3>1. サービス内容</h3>
@@ -601,14 +654,14 @@ export function renderAuthorizeConsentPage(options: {
     : "";
 
   return renderLayout({
-    title: `Googleアカウント連携の確認 | ${SERVICE_DISPLAY_NAME}`,
-    description: `${SERVICE_DISPLAY_NAME}とAIクライアントの連携確認画面です。`,
+    title: `Googleアカウント連携の確認 | ${SERVICE_NAME}`,
+    description: `${SERVICE_NAME}とAIクライアントの連携確認画面です。`,
     body: `
     <section class="card">
       <span class="pill">連携の確認</span>
       <h1>YouTubeアナリティクスの連携を許可しますか？</h1>
       <p>
-        AIクライアント「<strong>${escapeHtml(options.clientName)}</strong>」が、${escapeHtml(SERVICE_DISPLAY_NAME)}を通じてあなたのYouTubeチャンネル分析データを読み取ることをリクエストしています。
+        AIクライアント「<strong>${escapeHtml(options.clientName)}</strong>」が、${escapeHtml(SERVICE_NAME)}を通じてあなたのYouTubeチャンネル分析データを読み取ることをリクエストしています。
       </p>
       <p style="font-size: 0.9rem; color: var(--muted);">
         ${clientOriginNote}<br />
@@ -648,7 +701,7 @@ export function renderPartialGrantErrorPage(options: {
     .join("");
 
   return renderLayout({
-    title: `必要な権限が許可されませんでした | ${SERVICE_DISPLAY_NAME}`,
+    title: `必要な権限が許可されませんでした | ${SERVICE_NAME}`,
     description: "YouTubeアナリティクス連携に必要な権限が不足しています。",
     body: `
     <section class="card">
@@ -656,7 +709,7 @@ export function renderPartialGrantErrorPage(options: {
       <h1>必要なYouTubeの閲覧権限がチェックされていません</h1>
       <p>
         Googleの許可画面で一部のチェックが外れていたため、連携を完了できませんでした。
-        ${escapeHtml(SERVICE_DISPLAY_NAME)}を使うには、以下の<strong>読み取り専用権限がすべて必要</strong>です。
+        ${escapeHtml(SERVICE_NAME)}を使うには、以下の<strong>読み取り専用権限がすべて必要</strong>です。
       </p>
 
       <div class="alert-danger">
@@ -688,7 +741,7 @@ export function renderOAuthErrorPage(options: {
     : "";
 
   return renderLayout({
-    title: `${options.title} | ${SERVICE_DISPLAY_NAME}`,
+    title: `${options.title} | ${SERVICE_NAME}`,
     description: options.message,
     body: `
     <section class="card">
